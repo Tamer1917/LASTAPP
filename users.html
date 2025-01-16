@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        table {
+            width: 80%;
+            margin: 50px auto;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        th {
+            background-color: #333030;
+            color: #fff;
+        }
+
+        tr:nth-child(even) {
+            background-color: #444;
+        }
+
+        .container {
+            margin-top: 50px;
+        }
+
+        #add-user-button {
+            background-color: #00b300;
+            padding: 10px 20px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        #add-user-button:hover {
+            background-color: #4caf50;
+        }
+
+        h2 {
+            color: #ffcc00;
+            font-size: 24px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Leaderboard - Users and Their Points</h2>
+
+        <button id="add-user-button" onclick="addUser()">Add New User</button>
+
+        <table id="users-table">
+            <thead>
+                <tr>
+                    <th>User Name</th>
+                    <th>Points</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Users data will be displayed here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Function to display the users and their points
+        function displayUsers() {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+
+            const tableBody = document.getElementById('users-table').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                const nameCell = document.createElement('td');
+                const pointsCell = document.createElement('td');
+
+                nameCell.textContent = user.name;
+                pointsCell.textContent = user.points;
+
+                row.appendChild(nameCell);
+                row.appendChild(pointsCell);
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Function to add a new user (simulated)
+        function addUser() {
+            const userId = Date.now(); // Simulate a user ID
+            const userName = `User${userId}`;
+            const userPoints = 0;
+
+            let users = JSON.parse(localStorage.getItem('users')) || [];
+            users.push({ id: userId, name: userName, points: userPoints });
+
+            localStorage.setItem('users', JSON.stringify(users)); // Save users list to LocalStorage
+            displayUsers(); // Update the table with the new list
+        }
+
+        // Display the users when the page loads
+        window.onload = displayUsers;
+    </script>
+</body>
+
+</html>

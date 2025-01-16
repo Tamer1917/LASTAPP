@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>لعبة الشطرنج ضد الذكاء الاصطناعي</title>
+  <style>
+    .board {
+      display: grid;
+      grid-template-columns: repeat(8, 40px);
+      grid-template-rows: repeat(8, 40px);
+      width: 320px;
+      height: 320px;
+      margin: 35px auto;
+    }
+    .square {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+    .black {
+      background-color: #8B4513;
+    }
+    .white {
+      background-color: #f0d9b5;
+    }
+    .piece {
+      font-size: 28px;
+    }
+    .selected {
+      border: 2px solid yellow;
+    }
+    .turn-indicator, .timer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="turnIndicator">دور اللاعب: الأبيض</div>
+  <div id="timer">الوقت المتبقي: 40 ثانية</div>
+  <div id="board" class="board"></div>
+  <script>
+    const board = document.getElementById('board');
+    const turnIndicator = document.getElementById('turnIndicator');
+    const timer = document.getElementById('timer');
+    const initialBoard = [
+      ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+      ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+      ['', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', ''],
+      ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+      ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+    ];
+    const pieces = {
+      'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
+      'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+    };
+    let currentPlayer = 'white';
+    let selectedSquare = null;
+    let timerInterval;
+    const timerDuration = 40;
+
+    function startTimer() {
+      let timeLeft = timerDuration;
+      timer.textContent = `الوقت المتبقي: ${timeLeft} ثانية`;
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timer.textContent = `الوقت المتبقي: ${timeLeft} ثانية`;
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          changeTurn();
+          if (currentPlayer === 'black') {
+            setTimeout(aiMove, 500); // Make AI move after a short delay
+          }
+        }
+      }, 1000);
+    }
+
+    function createBoard() {
+      board.innerHTML = ''; // Empty the board before redrawing it
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+          const square = document.createElement('div');
+          square.classList.add('square');
+          square.classList.add((row + col) % 2 === 0 ? 'white' : 'black');
+          square.dataset.row = row;
+          square.dataset.col = col;
+          if (initialBoard[row][col]) {
+            const piece = document.createElement('span');
+            piece.classList.add('piece');
+            piece.textContent = pieces[initialBoard[row][col]];
+            square.appendChild(piece);
+          }
+          square.addEventListener('click', () => onSquareClick(row, col));
+          board.appendChild(square);
+        }
+      }
+      startTimer();
+    }
+
+    function onSquareClick(row, col) {
+      const piece = initialBoard[row][col];
+      if (selectedSquare) {
+        const [prevRow, prevCol] = selectedSquare;
+        if (isValidMove(prevRow, prevCol, row, col)) {
+          movePiece(prevRow, prevCol, row, col);
+          changeTurn();
+          if (currentPlayer === 'black') {
+            setTimeout(aiMove, 500); // Make AI move after a short delay
+          }
+        }
+        deselectSquare();
+      } else if (piece && isPieceOfCurrentPlayer(piece)) {
+        selectSquare(row, col);
+      }
+    }
+
+    function selectSquare(row, col) {
+      if (selectedSquare) deselectSquare();
+      selectedSquare = [row, col];
+      const square = getSquareElement(row, col);
+      square.classList.add('selected');
+    }
+
+    function deselectSquare() {
+      if (selectedSquare) {
+        const [row, col] = selectedSquare;
+        const square = getSquareElement(row, col);
+        square.classList.remove('selected');
+        selectedSquare = null;
+      }
+    }
+
+    function getSquareElement(row, col) {
+      return document.querySelector(`.square[data-row="${row}"][data-col="${col}"]`);
+    }
+
+    function isPieceOfCurrentPlayer(piece) {
+      if (currentPlayer === 'white' && piece === piece.toUpperCase()) return true;
+      if (currentPlayer === 'black' && piece === piece.toLowerCase()) return true;
+      return false;
+    }
+
+    function isValidMove(fromRow, fromCol, toRow, toCol) {
+      const currentPiece = initialBoard[fromRow][fromCol];
+      const targetPiece = initialBoard[toRow][toCol];
+
+      if (targetPiece && isPieceOfCurrentPlayer(targetPiece)) return false; // Can't capture own piece
+
+      if (currentPiece.toLowerCase() === 'p') {
+        const direction = currentPiece === 'P' ? -1 : 1;
+        if (currentPiece === 'P' || currentPiece === 'p') {
+          if (toRow === fromRow + direction && toCol === fromCol && !targetPiece) return true;
+          if (toRow === fromRow + direction && Math.abs(toCol - fromCol) === 1 && targetPiece) return true; // Capture move
+        }
+      }
+
+      // Add logic for all other pieces
+      // For Knight
+      const knightMoves = [
+        [2, 1], [1, 2], [-1, 2], [-2, 1],
+        [-2, -1], [-1, -2], [1, -2], [2, -1]
+      ];
+      if (currentPiece.toLowerCase() === 'n') {
+        for (const [dx, dy] of knightMoves) {
+          if (toRow === fromRow + dx && toCol === fromCol + dy) return true;
+        }
+      }
+
+      // Add logic for Rook, Bishop, Queen, and King here (left as exercise)
+
+      return false;
+    }
+
+    function movePiece(fromRow, fromCol, toRow, toCol) {
+      initialBoard[toRow][toCol] = initialBoard[fromRow][fromCol];
+      initialBoard[fromRow][fromCol] = '';
+      createBoard(); // Redraw the board
+    }
+
+    function changeTurn() {
+      currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+      clearInterval(timerInterval);
+      const playerInArabic = currentPlayer === 'white' ? 'الأبيض' : 'الأسود';
+      turnIndicator.textContent = `دور اللاعب: ${playerInArabic}`;
+      startTimer();
+    }
+
+    function aiMove() {
+      let possibleMoves = [];
+
+      for (let fromRow = 0; fromRow < 8; fromRow++) {
+        for (let fromCol = 0; fromCol < 8; fromCol++) {
+          if (initialBoard[fromRow][fromCol] && isPieceOfCurrentPlayer(initialBoard[fromRow][fromCol])) { // AI controlling black pieces
+            for (let toRow = 0; toRow < 8; toRow++) {
+              for (let toCol = 0; toCol < 8; toCol++) {
+                if (isValidMove(fromRow, fromCol, toRow, toCol)) {
+                  possibleMoves.push({ fromRow, fromCol, toRow, toCol });
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (possibleMoves.length > 0) {
+        let move = possibleMoves.sort((a, b) => Math.random() - 0.5)[0];
+        movePiece(move.fromRow, move.fromCol, move.toRow, move.toCol);
+        changeTurn();
+      }
+    }
+
+    createBoard(); // Initial board creation
+  </script>
+</body>
+</html>
