@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الصفحة الرئيسية</title>
+    <title>إدخال بيانات المستخدم</title>
 </head>
 <body>
-    <h1>مرحبًا بك في موقع Flask!</h1>
-    <p>تم تحميل هذا المحتوى من ملف HTML داخل تطبيق Flask الخاص بك.</p>
-    
-    <form action="/save-user" method="post">
+    <h1>إدخال بيانات المستخدم</h1>
+    <form action="/save-user" method="POST">
         <label for="userId">معرف المستخدم:</label>
         <input type="text" id="userId" name="userId" required>
-        <br><br>
+        <br>
         <label for="username">اسم المستخدم:</label>
         <input type="text" id="username" name="username" required>
-        <br><br>
+        <br>
         <button type="submit">حفظ</button>
     </form>
 </body>
